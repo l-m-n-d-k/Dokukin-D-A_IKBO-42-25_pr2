@@ -1,0 +1,6 @@
+# Корректная конфигурация для работы с реальным npm-репозиторием.
+package_name: express
+repository: https://registry.npmjs.org
+test_mode: false
+version: "4.18.2"
+output_file: graph.png

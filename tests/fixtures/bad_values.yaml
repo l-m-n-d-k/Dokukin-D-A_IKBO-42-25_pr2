@@ -1,0 +1,6 @@
+# Все параметры на месте, но значения недопустимы.
+package_name: Express
+repository: registry.npmjs.org
+test_mode: false
+version: "4.18"
+output_file: graph.jpg

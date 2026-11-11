@@ -1,0 +1,6 @@
+# Корректная конфигурация для режима тестового репозитория.
+package_name: A
+repository: tests/fixtures/test_repo.txt
+test_mode: true
+version: "1.0.0"
+output_file: test_graph.png

@@ -1,0 +1,6 @@
+# Опечатка в имени параметра: packge_name вместо package_name.
+packge_name: express
+repository: https://registry.npmjs.org
+test_mode: false
+version: "4.18.2"
+output_file: graph.png

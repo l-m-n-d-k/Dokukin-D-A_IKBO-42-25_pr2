@@ -1,0 +1,5 @@
+# Нет обязательного параметра version.
+package_name: express
+repository: https://registry.npmjs.org
+test_mode: false
+output_file: graph.png

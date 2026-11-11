@@ -1,0 +1,7 @@
+# Тестовый режим: имя не из больших букв, файла репозитория нет,
+# каталога для выходного файла нет.
+package_name: a1
+repository: tests/fixtures/no_such_file.txt
+test_mode: true
+version: "1.0.0-"
+output_file: no_such_dir/graph.png

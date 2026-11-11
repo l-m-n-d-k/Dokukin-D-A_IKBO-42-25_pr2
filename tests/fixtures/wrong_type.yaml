@@ -1,0 +1,6 @@
+# test_mode должен быть true или false, а не строкой.
+package_name: express
+repository: https://registry.npmjs.org
+test_mode: "да"
+version: "4.18.2"
+output_file: graph.png
