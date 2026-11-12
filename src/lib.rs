@@ -3,12 +3,14 @@
 //! Этап 1: минимальный CLI-прототип, настраиваемый через YAML-файл.
 //! Этап 2: сбор данных — прямые зависимости пакета из репозитория npm.
 //! Этап 3: транзитивный граф зависимостей (BFS), тестовый репозиторий.
+//! Этап 4: обратные зависимости пакета.
 
 pub mod cli;
 pub mod config;
 pub mod error;
 pub mod graph;
 pub mod npm;
+pub mod reverse;
 pub mod semver;
 pub mod source;
 pub mod test_repo;

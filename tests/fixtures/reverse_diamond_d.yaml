@@ -1,0 +1,7 @@
+# Обратные зависимости пакета D в графе пакета A (tests/fixtures/repos/diamond.txt)
+package_name: A
+repository: tests/fixtures/repos/diamond.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png
+reverse_for: D

@@ -27,19 +27,29 @@ pub struct Config {
     pub version: String,
     /// Имя сгенерированного файла с изображением графа.
     pub output_file: String,
+    /// Пакет, для которого нужно вывести обратные зависимости, то есть пакеты
+    /// графа, которые зависят от него. Параметр необязателен: если его нет,
+    /// выводится сам граф зависимостей.
+    #[serde(default)]
+    pub reverse_for: Option<String>,
 }
 
 impl Config {
-    /// Возвращает все параметры в виде пар «ключ — значение»
-    /// в том порядке, в котором они описаны в структуре.
-    pub fn entries(&self) -> [(&'static str, String); 5] {
-        [
+    /// Возвращает заданные параметры в виде пар «ключ — значение»
+    /// в том порядке, в котором они описаны в структуре. Необязательный
+    /// параметр `reverse_for` включается, только если он задан.
+    pub fn entries(&self) -> Vec<(&'static str, String)> {
+        let mut entries = vec![
             ("package_name", self.package_name.clone()),
             ("repository", self.repository.clone()),
             ("test_mode", self.test_mode.to_string()),
             ("version", self.version.clone()),
             ("output_file", self.output_file.clone()),
-        ]
+        ];
+        if let Some(target) = &self.reverse_for {
+            entries.push(("reverse_for", target.clone()));
+        }
+        entries
     }
 }
 

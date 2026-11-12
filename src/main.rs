@@ -5,8 +5,7 @@ use std::process::ExitCode;
 use depgraph::cli::{self, Command};
 use depgraph::config;
 use depgraph::error::AppError;
-use depgraph::graph::format_graph;
-use depgraph::source::build_graph_for;
+use depgraph::source::report_for;
 
 /// Запускает приложение и превращает ошибку в сообщение и код возврата 1.
 fn main() -> ExitCode {
@@ -20,14 +19,14 @@ fn main() -> ExitCode {
 }
 
 /// Разбирает аргументы, загружает конфигурацию, строит граф зависимостей
-/// заданного пакета (с учётом транзитивности) и выводит его на экран.
+/// заданного пакета и выводит на экран граф или (если задан `reverse_for`)
+/// обратные зависимости.
 fn run(args: impl Iterator<Item = String>) -> Result<(), AppError> {
     match cli::parse_args(args)? {
         Command::Help => println!("{}", cli::USAGE),
         Command::Run(path) => {
             let config = config::load_config(&path)?;
-            let graph = build_graph_for(&config)?;
-            print!("{}", format_graph(&graph));
+            print!("{}", report_for(&config)?);
         }
     }
     Ok(())

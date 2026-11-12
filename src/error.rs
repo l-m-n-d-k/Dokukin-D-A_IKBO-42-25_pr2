@@ -58,6 +58,8 @@ pub enum AppError {
     InvalidConfig(Vec<FieldError>),
     /// Не удалось получить или разобрать данные о пакете из репозитория.
     Npm(String),
+    /// Не удалось найти обратные зависимости (например, пакета нет в графе).
+    Reverse(String),
 }
 
 impl fmt::Display for AppError {
@@ -78,6 +80,9 @@ impl fmt::Display for AppError {
                 Ok(())
             }
             Self::Npm(message) => write!(f, "не удалось получить зависимости: {message}"),
+            Self::Reverse(message) => {
+                write!(f, "не удалось найти обратные зависимости: {message}")
+            }
         }
     }
 }
@@ -87,7 +92,7 @@ impl std::error::Error for AppError {
         match self {
             Self::ReadConfig { source, .. } => Some(source),
             Self::ParseConfig { source, .. } => Some(source),
-            Self::Usage(_) | Self::InvalidConfig(_) | Self::Npm(_) => None,
+            Self::Usage(_) | Self::InvalidConfig(_) | Self::Npm(_) | Self::Reverse(_) => None,
         }
     }
 }

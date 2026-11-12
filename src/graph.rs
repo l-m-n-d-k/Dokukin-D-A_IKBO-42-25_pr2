@@ -54,6 +54,17 @@ pub struct Graph {
     pub nodes: Vec<Node>,
 }
 
+impl Node {
+    /// Подпись вершины: `имя@версия`, а без версии — просто имя.
+    pub fn label(&self) -> String {
+        if self.version.is_empty() {
+            self.name.clone()
+        } else {
+            format!("{}@{}", self.name, self.version)
+        }
+    }
+}
+
 impl Graph {
     /// Ищет вершину по имени пакета.
     pub fn node(&self, name: &str) -> Option<&Node> {
@@ -107,7 +118,7 @@ pub fn build_graph(
 /// Форматирует граф для вывода на экран: заголовок и по строке
 /// `пакет -> зависимость, зависимость` для каждой вершины.
 pub fn format_graph(graph: &Graph) -> String {
-    let root = graph.nodes.first().map(label).unwrap_or_default();
+    let root = graph.nodes.first().map(Node::label).unwrap_or_default();
     let mut text = format!(
         "Граф зависимостей {root}: пакетов {}, зависимостей {}\n",
         graph.nodes.len(),
@@ -119,16 +130,7 @@ pub fn format_graph(graph: &Graph) -> String {
         } else {
             node.dependencies.join(", ")
         };
-        text.push_str(&format!("  {} -> {targets}\n", label(node)));
+        text.push_str(&format!("  {} -> {targets}\n", node.label()));
     }
     text
-}
-
-/// Подпись вершины: `имя@версия`, а без версии — просто имя.
-fn label(node: &Node) -> String {
-    if node.version.is_empty() {
-        node.name.clone()
-    } else {
-        format!("{}@{}", node.name, node.version)
-    }
 }

@@ -92,3 +92,25 @@ fn bad_args_are_usage_errors() {
     assert!(matches!(parse_args(args(&["a.yaml", "b.yaml"])), Err(AppError::Usage(_))));
     assert!(matches!(parse_args(args(&["--verbose"])), Err(AppError::Usage(_))));
 }
+
+#[test]
+fn reverse_for_is_optional() {
+    let config = load_fixture("valid.yaml").unwrap();
+    assert_eq!(config.reverse_for, None);
+}
+
+#[test]
+fn reverse_for_is_loaded_and_printed() {
+    let config = load_fixture("reverse_demo_g.yaml").unwrap();
+    assert_eq!(config.reverse_for.as_deref(), Some("G"));
+    assert!(config.to_string().ends_with("reverse_for = G\n"));
+}
+
+#[test]
+fn reverse_for_follows_the_package_name_rules_of_the_mode() {
+    let Err(AppError::InvalidConfig(errors)) = load_fixture("reverse_bad_name.yaml") else {
+        panic!("ожидалась ошибка InvalidConfig");
+    };
+    let fields: Vec<_> = errors.iter().map(|e| e.field).collect();
+    assert_eq!(fields, ["reverse_for"]);
+}

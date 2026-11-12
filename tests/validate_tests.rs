@@ -2,7 +2,7 @@
 
 use depgraph::validate::{
     MAX_NPM_NAME_LEN, check_npm_package_name, check_output_file, check_package_name,
-    check_repository, check_test_package_name, check_url, check_version,
+    check_repository, check_reverse_for, check_test_package_name, check_url, check_version,
 };
 
 #[test]
@@ -82,4 +82,15 @@ fn output_files() {
     assert!(check_output_file("graph.jpg").is_err());
     assert!(check_output_file("graph").is_err());
     assert!(check_output_file("no_such_dir/graph.png").is_err());
+}
+
+#[test]
+fn reverse_for_is_checked_only_when_set() {
+    assert!(check_reverse_for(None, false).is_ok());
+    assert!(check_reverse_for(None, true).is_ok());
+    assert!(check_reverse_for(Some("express"), false).is_ok());
+    assert!(check_reverse_for(Some("Express"), false).is_err());
+    assert!(check_reverse_for(Some("G"), true).is_ok());
+    assert!(check_reverse_for(Some("g"), true).is_err());
+    assert!(check_reverse_for(Some(""), true).is_err());
 }

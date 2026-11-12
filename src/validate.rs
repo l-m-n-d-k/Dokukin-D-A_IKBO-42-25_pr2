@@ -29,6 +29,7 @@ pub fn validate_config(config: &Config) -> Result<(), Vec<FieldError>> {
         ("repository", check_repository(&config.repository, config.test_mode)),
         ("version", check_version(&config.version)),
         ("output_file", check_output_file(&config.output_file)),
+        ("reverse_for", check_reverse_for(config.reverse_for.as_deref(), config.test_mode)),
     ];
 
     let errors: Vec<FieldError> = checks
@@ -37,6 +38,12 @@ pub fn validate_config(config: &Config) -> Result<(), Vec<FieldError>> {
         .collect();
 
     if errors.is_empty() { Ok(()) } else { Err(errors) }
+}
+
+/// Проверяет необязательный параметр `reverse_for`: если он задан, это должно
+/// быть корректное имя пакета (по тем же правилам, что и `package_name`).
+pub fn check_reverse_for(target: Option<&str>, test_mode: bool) -> Result<(), String> {
+    target.map_or(Ok(()), |name| check_package_name(name, test_mode))
 }
 
 /// Проверяет имя пакета.

@@ -4,8 +4,9 @@ use std::path::Path;
 
 use crate::config::Config;
 use crate::error::AppError;
-use crate::graph::{DependencySource, Graph, build_graph};
+use crate::graph::{DependencySource, Graph, build_graph, format_graph};
 use crate::npm::NpmRepository;
+use crate::reverse::{format_reverse, reverse_dependencies};
 use crate::test_repo::load_test_repository;
 
 /// Открывает источник данных: тестовый файл (`test_mode: true`)
@@ -33,4 +34,25 @@ pub fn open_source(config: &Config) -> Result<Box<dyn DependencySource>, AppErro
 pub fn build_graph_for(config: &Config) -> Result<Graph, AppError> {
     let mut source = open_source(config)?;
     build_graph(source.as_mut(), &config.package_name, &config.version).map_err(AppError::Npm)
+}
+
+/// Выполняет работу приложения по конфигурации и возвращает текст для вывода.
+///
+/// Строится граф зависимостей пакета `package_name`. Если задан параметр
+/// `reverse_for`, возвращаются обратные зависимости этого пакета в графе,
+/// иначе — сам граф.
+///
+/// # Ошибки
+///
+/// - [`AppError::Npm`] — не удалось получить или разобрать данные;
+/// - [`AppError::Reverse`] — пакета `reverse_for` нет в графе.
+pub fn report_for(config: &Config) -> Result<String, AppError> {
+    let graph = build_graph_for(config)?;
+    match &config.reverse_for {
+        Some(target) => {
+            let levels = reverse_dependencies(&graph, target).map_err(AppError::Reverse)?;
+            Ok(format_reverse(&graph, target, &levels))
+        }
+        None => Ok(format_graph(&graph)),
+    }
 }

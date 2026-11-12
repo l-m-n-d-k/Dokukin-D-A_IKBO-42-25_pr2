@@ -1,0 +1,7 @@
+# Обратные зависимости пакета E в графе пакета A (tests/fixtures/repos/reverse_demo.txt)
+package_name: A
+repository: tests/fixtures/repos/reverse_demo.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png
+reverse_for: E

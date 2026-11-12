@@ -1,0 +1,7 @@
+# Имя пакета в reverse_for не из больших латинских букв (тестовый режим).
+package_name: A
+repository: tests/fixtures/repos/reverse_demo.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png
+reverse_for: g1
