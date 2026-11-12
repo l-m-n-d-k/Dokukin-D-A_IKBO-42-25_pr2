@@ -1,0 +1,6 @@
+# Репозиторий недоступен: на порту 1 никто не слушает.
+package_name: express
+repository: http://127.0.0.1:1
+test_mode: false
+version: "4.18.2"
+output_file: graph.png

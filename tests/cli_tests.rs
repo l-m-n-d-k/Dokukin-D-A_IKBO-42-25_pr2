@@ -11,15 +11,6 @@ fn run_app(args: &[&str]) -> Output {
 }
 
 #[test]
-fn valid_config_prints_parameters_and_succeeds() {
-    let output = run_app(&["tests/fixtures/valid.yaml"]);
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(output.status.success());
-    assert!(stdout.contains("package_name = express"));
-    assert!(stdout.contains("output_file = graph.png"));
-}
-
-#[test]
 fn invalid_config_prints_error_and_fails() {
     let output = run_app(&["tests/fixtures/bad_values.yaml"]);
     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -27,6 +18,22 @@ fn invalid_config_prints_error_and_fails() {
     assert!(output.stdout.is_empty());
     assert!(stderr.starts_with("Ошибка:"));
     assert!(stderr.contains("version"));
+}
+
+#[test]
+fn test_mode_reports_that_it_is_not_ready() {
+    let output = run_app(&["tests/fixtures/valid_test_mode.yaml"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success());
+    assert!(stderr.contains("этапе 3"), "{stderr}");
+}
+
+#[test]
+fn unreachable_repository_prints_error_and_fails() {
+    let output = run_app(&["tests/fixtures/unreachable.yaml"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success());
+    assert!(stderr.contains("не удалось подключиться"), "{stderr}");
 }
 
 #[test]

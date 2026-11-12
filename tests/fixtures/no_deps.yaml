@@ -1,0 +1,6 @@
+# Пакет без прямых зависимостей.
+package_name: is-number
+repository: https://registry.npmjs.org
+test_mode: false
+version: "7.0.0"
+output_file: graph.png

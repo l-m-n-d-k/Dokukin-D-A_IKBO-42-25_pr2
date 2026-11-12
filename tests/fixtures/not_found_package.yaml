@@ -1,0 +1,6 @@
+# Пакета с таким именем нет в реестре npm (нужен доступ в интернет).
+package_name: this-package-does-not-exist-xyz-12345
+repository: https://registry.npmjs.org
+test_mode: false
+version: "1.0.0"
+output_file: graph.png

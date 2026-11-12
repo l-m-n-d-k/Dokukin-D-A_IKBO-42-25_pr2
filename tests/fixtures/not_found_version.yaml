@@ -1,0 +1,6 @@
+# Пакет есть, но такой версии не существует (нужен доступ в интернет).
+package_name: express
+repository: https://registry.npmjs.org
+test_mode: false
+version: "999.0.0"
+output_file: graph.png
