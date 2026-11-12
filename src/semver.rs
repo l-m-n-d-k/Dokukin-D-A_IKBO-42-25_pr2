@@ -18,6 +18,9 @@ pub type Triple = (u64, u64, u64);
 /// Нулевое значение номера версии.
 const ZERO: u64 = 0;
 
+/// Метка версии, которую npm предпочитает при выборе подходящей версии.
+const LATEST_TAG: &str = "latest";
+
 /// Операторы сравнения, которые могут стоять отдельно от номера версии.
 const OPERATORS: [&str; 8] = [">=", "<=", ">", "<", "=", "^", "~", "~>"];
 
@@ -228,7 +231,9 @@ fn parse_stable(text: &str) -> Option<Triple> {
 /// Порядок выбора:
 /// 1. метка из `dist_tags` (`latest`, `next`);
 /// 2. точное совпадение с одной из доступных версий (в том числе предварительной);
-/// 3. самая новая стабильная версия, подходящая под диапазон.
+/// 3. версия с меткой `latest`, если она подходит под диапазон (так выбирает
+///    и npm: метка важнее более новой, но не отмеченной версии);
+/// 4. самая новая стабильная версия, подходящая под диапазон.
 ///
 /// # Ошибки
 ///
@@ -247,10 +252,17 @@ pub fn resolve_version(
         return Ok(spec.to_string());
     }
     let sets = parse_range(spec)?;
+    let matches = |triple: &Triple| sets.iter().any(|set| set.iter().all(|c| c.holds(*triple)));
+
+    // Как и npm, предпочитаем версию с меткой `latest`, если она подходит.
+    let latest = dist_tags.get(LATEST_TAG).filter(|v| parse_stable(v).is_some_and(|t| matches(&t)));
+    if let Some(latest) = latest {
+        return Ok(latest.clone());
+    }
     available
         .iter()
         .filter_map(|v| parse_stable(v).map(|triple| (triple, v)))
-        .filter(|(triple, _)| sets.iter().any(|set| set.iter().all(|c| c.holds(*triple))))
+        .filter(|(triple, _)| matches(triple))
         .max_by_key(|(triple, _)| *triple)
         .map(|(_, version)| version.clone())
         .ok_or_else(|| format!("нет версии, подходящей под '{spec}'"))

@@ -60,6 +60,8 @@ pub enum AppError {
     Npm(String),
     /// Не удалось найти обратные зависимости (например, пакета нет в графе).
     Reverse(String),
+    /// Не удалось нарисовать или сохранить изображение графа.
+    Render(String),
 }
 
 impl fmt::Display for AppError {
@@ -83,6 +85,7 @@ impl fmt::Display for AppError {
             Self::Reverse(message) => {
                 write!(f, "не удалось найти обратные зависимости: {message}")
             }
+            Self::Render(message) => write!(f, "не удалось создать изображение: {message}"),
         }
     }
 }
@@ -92,7 +95,8 @@ impl std::error::Error for AppError {
         match self {
             Self::ReadConfig { source, .. } => Some(source),
             Self::ParseConfig { source, .. } => Some(source),
-            Self::Usage(_) | Self::InvalidConfig(_) | Self::Npm(_) | Self::Reverse(_) => None,
+            Self::Usage(_) | Self::InvalidConfig(_) => None,
+            Self::Npm(_) | Self::Reverse(_) | Self::Render(_) => None,
         }
     }
 }

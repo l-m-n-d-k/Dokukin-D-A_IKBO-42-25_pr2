@@ -113,3 +113,18 @@ fn unsupported_and_unsatisfiable_ranges_are_errors() {
         assert!(pick(spec).is_err(), "{spec}");
     }
 }
+
+#[test]
+fn latest_tag_wins_over_newer_version_if_it_satisfies_the_range() {
+    // Как в npm: метка latest указывает на 1.3.0, хотя есть 1.10.0.
+    let tags = BTreeMap::from([("latest".to_string(), "1.3.0".to_string())]);
+    assert_eq!(resolve_version("^1.0.0", &versions(), &tags).unwrap(), "1.3.0");
+    assert_eq!(resolve_version("*", &versions(), &tags).unwrap(), "1.3.0");
+}
+
+#[test]
+fn latest_tag_is_ignored_if_it_does_not_satisfy_the_range() {
+    let tags = BTreeMap::from([("latest".to_string(), "1.3.0".to_string())]);
+    assert_eq!(resolve_version("^2.0.0", &versions(), &tags).unwrap(), "2.5.0");
+    assert_eq!(resolve_version("^0.1.0", &versions(), &tags).unwrap(), "0.1.5");
+}
