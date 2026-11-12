@@ -1,0 +1,6 @@
+# Тестовый режим: репозиторий tests/fixtures/repos/tree.txt
+package_name: A
+repository: tests/fixtures/repos/tree.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png

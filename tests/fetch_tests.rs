@@ -1,89 +1,137 @@
-//! Тесты загрузки данных с локальным HTTP-сервером вместо реального npm.
+//! Тесты загрузки данных с локального HTTP-сервера вместо реального npm.
 
+use std::collections::HashMap;
 use std::io::{Read, Write};
-use std::net::TcpListener;
+use std::net::{TcpListener, TcpStream};
 use std::thread;
 
-use depgraph::config::Config;
-use depgraph::error::AppError;
-use depgraph::npm::{fetch_dependencies, fetch_manifest};
+use depgraph::graph::{DependencySource, build_graph};
+use depgraph::npm::{NpmRepository, fetch_manifest};
 
 /// Размер буфера для чтения HTTP-запроса.
 const REQUEST_BUFFER: usize = 4096;
 
-/// Запускает сервер, который отвечает на один запрос заданным статусом
-/// и телом. Возвращает базовый адрес сервера и поток с полученным запросом.
-fn serve_once(status: &str, body: &str) -> (String, thread::JoinHandle<String>) {
+/// Ответ сервера: статус и тело.
+type Reply = (&'static str, &'static str);
+
+/// Поток сервера; по завершении отдаёт пути полученных запросов.
+type Server = thread::JoinHandle<Vec<String>>;
+
+/// Читает один HTTP-запрос из соединения, отвечает на него по таблице
+/// маршрутов и возвращает путь из запроса. Неизвестный путь даёт 404.
+fn answer(mut stream: TcpStream, routes: &HashMap<&str, Reply>) -> String {
+    let mut buffer = [0u8; REQUEST_BUFFER];
+    let read = stream.read(&mut buffer).unwrap();
+    let request = String::from_utf8_lossy(&buffer[..read]).into_owned();
+    let path = request.split_whitespace().nth(1).unwrap_or_default().to_string();
+
+    let not_found = ("404 Not Found", "{}");
+    let (status, body) = routes.get(path.as_str()).copied().unwrap_or(not_found);
+    let length = body.len();
+    let headers = format!("Content-Length: {length}\r\nConnection: close");
+    let response = format!("HTTP/1.1 {status}\r\n{headers}\r\n\r\n{body}");
+    stream.write_all(response.as_bytes()).unwrap();
+    path
+}
+
+/// Запускает сервер, который обслуживает `count` запросов.
+/// Возвращает базовый адрес сервера и поток с путями полученных запросов.
+fn serve(routes: &[(&'static str, Reply)], count: usize) -> (String, Server) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap());
-    let response = format!(
-        "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-        body.len()
-    );
+    let routes: HashMap<&str, Reply> = routes.iter().copied().collect();
     let handle = thread::spawn(move || {
-        let (mut stream, _) = listener.accept().unwrap();
-        let mut buffer = [0u8; REQUEST_BUFFER];
-        let read = stream.read(&mut buffer).unwrap();
-        stream.write_all(response.as_bytes()).unwrap();
-        String::from_utf8_lossy(&buffer[..read]).into_owned()
+        let connections = listener.incoming().take(count);
+        connections.map(|stream| answer(stream.unwrap(), &routes)).collect()
     });
     (address, handle)
 }
 
-/// Конфигурация, указывающая на локальный сервер.
-fn config_for(repository: String) -> Config {
-    Config {
-        package_name: "demo".to_string(),
-        repository,
-        test_mode: false,
-        version: "1.2.3".to_string(),
-        output_file: "graph.png".to_string(),
+/// Документ пакета `app`: версии 1.0.0 и 1.1.0, зависимости от `lib` и `util`.
+const APP: &str = r#"{
+    "dist-tags": {"latest": "1.1.0"},
+    "versions": {
+        "1.0.0": {"dependencies": {"lib": "^1.0.0"}},
+        "1.1.0": {"dependencies": {"lib": "^1.0.0", "util": "~2.0.0"}}
     }
+}"#;
+
+/// Документ пакета `lib`: зависит от `app`, образуя цикл.
+const LIB: &str = r#"{
+    "versions": {
+        "1.0.0": {"dependencies": {"app": "*"}},
+        "1.4.0": {"dependencies": {"app": "*"}},
+        "2.0.0": {}
+    }
+}"#;
+
+/// Документ пакета `util`.
+const UTIL: &str = r#"{"versions": {"2.0.0": {}, "2.0.7": {}, "2.1.0": {}}}"#;
+
+#[test]
+fn graph_is_built_from_repository_url() {
+    let ok = "200 OK";
+    let routes = [("/app", (ok, APP)), ("/lib", (ok, LIB)), ("/util", (ok, UTIL))];
+    let (address, server) = serve(&routes, 3);
+
+    let mut repository = NpmRepository::new(&address);
+    let graph = build_graph(&mut repository, "app", "1.1.0").unwrap();
+
+    let found: Vec<_> = graph.nodes.iter().map(|n| format!("{}@{}", n.name, n.version)).collect();
+    assert_eq!(found, ["app@1.1.0", "lib@1.4.0", "util@2.0.7"]);
+    assert_eq!(graph.node("lib").unwrap().dependencies, ["app"]);
+    assert_eq!(server.join().unwrap(), ["/app", "/lib", "/util"]);
 }
 
 #[test]
-fn dependencies_are_fetched_from_repository_url() {
-    let body = r#"{"dependencies": {"left": "^1.0.0", "right": "2.x"}}"#;
-    let (address, server) = serve_once("200 OK", body);
+fn root_version_is_taken_from_config() {
+    let (address, _server) = serve(&[("/app", ("200 OK", APP))], 1);
+    let mut repository = NpmRepository::new(&address);
+    let package = repository.package("app", "1.0.0").unwrap();
+    assert_eq!(package.version, "1.0.0");
+    assert_eq!(package.dependencies.len(), 1);
+}
 
-    let deps = fetch_dependencies(&config_for(address)).unwrap();
+#[test]
+fn missing_root_version_is_an_error() {
+    let (address, _server) = serve(&[("/app", ("200 OK", APP))], 1);
+    let mut repository = NpmRepository::new(&address);
+    let error = repository.package("app", "9.9.9").unwrap_err();
+    assert!(error.contains("9.9.9"), "{error}");
+}
 
-    assert_eq!(deps.len(), 2);
-    assert_eq!(deps["left"], "^1.0.0");
-    assert!(server.join().unwrap().starts_with("GET /demo/1.2.3 HTTP/1.1"));
+#[test]
+fn missing_package_is_reported_with_its_name() {
+    let (address, _server) = serve(&[("/app", ("200 OK", APP))], 2);
+    let mut repository = NpmRepository::new(&address);
+    let error = build_graph(&mut repository, "app", "1.0.0").unwrap_err();
+    assert!(error.contains("'lib'") && error.contains("не найден"), "{error}");
 }
 
 #[test]
 fn not_found_is_reported_as_missing_package() {
-    let (address, _server) = serve_once("404 Not Found", "{}");
-    let error = fetch_manifest(&format!("{address}/demo/1.2.3")).unwrap_err();
-    assert!(error.contains("не найдены"), "{error}");
+    let (address, _server) = serve(&[], 1);
+    let error = fetch_manifest(&format!("{address}/demo")).unwrap_err();
+    assert!(error.contains("не найден"), "{error}");
 }
 
 #[test]
 fn server_error_status_is_reported() {
-    let (address, _server) = serve_once("500 Internal Server Error", "oops");
-    let error = fetch_manifest(&format!("{address}/demo/1.2.3")).unwrap_err();
+    let (address, _server) = serve(&[("/demo", ("500 Internal Server Error", "oops"))], 1);
+    let error = fetch_manifest(&format!("{address}/demo")).unwrap_err();
     assert!(error.contains("500"), "{error}");
 }
 
 #[test]
 fn unreachable_server_is_reported() {
     // Порт 1 никто не слушает.
-    let error = fetch_manifest("http://127.0.0.1:1/demo/1.2.3").unwrap_err();
+    let error = fetch_manifest("http://127.0.0.1:1/demo").unwrap_err();
     assert!(error.contains("не удалось подключиться"), "{error}");
 }
 
 #[test]
 fn invalid_json_from_server_is_an_error() {
-    let (address, _server) = serve_once("200 OK", "<html>not json</html>");
-    let result = fetch_dependencies(&config_for(address));
-    assert!(matches!(result, Err(AppError::Npm(_))), "{result:?}");
-}
-
-#[test]
-fn test_mode_is_not_supported_yet() {
-    let mut config = config_for("tests/fixtures/test_repo.txt".to_string());
-    config.test_mode = true;
-    assert!(matches!(fetch_dependencies(&config), Err(AppError::Unsupported(_))));
+    let (address, _server) = serve(&[("/app", ("200 OK", "<html>not json</html>"))], 1);
+    let error = NpmRepository::new(&address).package("app", "1.0.0").unwrap_err();
+    assert!(error.contains("JSON"), "{error}");
 }

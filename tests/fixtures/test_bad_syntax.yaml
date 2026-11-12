@@ -1,0 +1,6 @@
+# Тестовый файл с синтаксической ошибкой в строке 2.
+package_name: A
+repository: tests/fixtures/repos/bad_syntax.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png

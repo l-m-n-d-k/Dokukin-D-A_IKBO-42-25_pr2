@@ -1,0 +1,6 @@
+# Граф строится не от A, а от пакета B (ромб).
+package_name: B
+repository: tests/fixtures/repos/diamond.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png

@@ -1,24 +1,23 @@
-//! Тесты разбора манифеста и построения адреса (без обращения к сети).
+//! Тесты разбора документов репозитория и построения адреса (без сети).
 
-use depgraph::npm::{Dependencies, format_dependencies, manifest_url, parse_dependencies};
+use depgraph::npm::{packument_url, parse_dependencies, parse_packument};
 
 #[test]
-fn url_is_built_from_repository_name_and_version() {
-    let url = manifest_url("https://registry.npmjs.org", "express", "4.18.2");
-    assert_eq!(url, "https://registry.npmjs.org/express/4.18.2");
+fn url_is_built_from_repository_and_name() {
+    let url = packument_url("https://registry.npmjs.org", "express");
+    assert_eq!(url, "https://registry.npmjs.org/express");
 }
 
 #[test]
 fn url_ignores_trailing_slash_and_keeps_scope() {
-    let url = manifest_url("http://localhost:4873/", "@babel/core", "7.0.0");
-    assert_eq!(url, "http://localhost:4873/@babel/core/7.0.0");
+    let url = packument_url("http://localhost:4873/", "@babel/core");
+    assert_eq!(url, "http://localhost:4873/@babel/core");
 }
 
 #[test]
-fn dependencies_are_extracted() {
+fn dependencies_are_extracted_from_manifest() {
     let manifest = r#"{
         "name": "demo",
-        "version": "1.0.0",
         "dependencies": {"zlib": "^1.0.0", "accepts": "~1.3.8"},
         "devDependencies": {"mocha": "10.0.0"}
     }"#;
@@ -30,12 +29,7 @@ fn dependencies_are_extracted() {
 
 #[test]
 fn missing_dependencies_field_means_no_dependencies() {
-    let deps = parse_dependencies(r#"{"name": "leaf", "version": "1.0.0"}"#).unwrap();
-    assert!(deps.is_empty());
-}
-
-#[test]
-fn empty_dependencies_object_means_no_dependencies() {
+    assert!(parse_dependencies(r#"{"name": "leaf"}"#).unwrap().is_empty());
     assert!(parse_dependencies(r#"{"dependencies": {}}"#).unwrap().is_empty());
 }
 
@@ -45,9 +39,7 @@ fn broken_manifests_are_rejected() {
         "",
         "not json",
         "[]",
-        "42",
         r#"{"dependencies": []}"#,
-        r#"{"dependencies": "a"}"#,
         r#"{"dependencies": {"a": 1}}"#,
         r#"{"dependencies": {"a": null}}"#,
     ] {
@@ -56,17 +48,40 @@ fn broken_manifests_are_rejected() {
 }
 
 #[test]
-fn dependencies_are_formatted_one_per_line() {
-    let deps = Dependencies::from([
-        ("b".to_string(), "^2.0.0".to_string()),
-        ("a".to_string(), "1.0.0".to_string()),
-    ]);
-    let expected = "Прямые зависимости demo@1.0.0: 2\n  a: 1.0.0\n  b: ^2.0.0\n";
-    assert_eq!(format_dependencies("demo", "1.0.0", &deps), expected);
+fn packument_has_versions_and_tags() {
+    let text = r#"{
+        "name": "demo",
+        "dist-tags": {"latest": "2.0.0"},
+        "versions": {
+            "1.0.0": {"dependencies": {"a": "^1.0.0"}},
+            "2.0.0": {}
+        }
+    }"#;
+    let packument = parse_packument(text).unwrap();
+    assert_eq!(packument.dist_tags["latest"], "2.0.0");
+    assert_eq!(packument.versions["1.0.0"]["a"], "^1.0.0");
+    assert!(packument.versions["2.0.0"].is_empty());
 }
 
 #[test]
-fn empty_dependencies_are_formatted_with_a_note() {
-    let text = format_dependencies("leaf", "1.0.0", &Dependencies::new());
-    assert_eq!(text, "Прямые зависимости leaf@1.0.0: 0\n  (нет прямых зависимостей)\n");
+fn packument_without_tags_is_accepted() {
+    let packument = parse_packument(r#"{"versions": {}}"#).unwrap();
+    assert!(packument.dist_tags.is_empty());
+    assert!(packument.versions.is_empty());
+}
+
+#[test]
+fn broken_packuments_are_rejected() {
+    for text in [
+        "",
+        "[]",
+        "{}",
+        r#"{"versions": []}"#,
+        r#"{"versions": {"1.0.0": 5}}"#,
+        r#"{"versions": {}, "dist-tags": []}"#,
+        r#"{"versions": {}, "dist-tags": {"latest": 1}}"#,
+        r#"{"versions": {"1.0.0": {"dependencies": {"a": 1}}}}"#,
+    ] {
+        assert!(parse_packument(text).is_err(), "{text}");
+    }
 }

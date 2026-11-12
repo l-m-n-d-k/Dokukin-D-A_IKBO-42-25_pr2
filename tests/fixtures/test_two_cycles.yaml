@@ -1,0 +1,6 @@
+# Тестовый режим: репозиторий tests/fixtures/repos/two_cycles.txt
+package_name: A
+repository: tests/fixtures/repos/two_cycles.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png

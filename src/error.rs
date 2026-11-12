@@ -58,8 +58,6 @@ pub enum AppError {
     InvalidConfig(Vec<FieldError>),
     /// Не удалось получить или разобрать данные о пакете из репозитория.
     Npm(String),
-    /// Запрошена возможность, которая появится на следующих этапах.
-    Unsupported(String),
 }
 
 impl fmt::Display for AppError {
@@ -80,7 +78,6 @@ impl fmt::Display for AppError {
                 Ok(())
             }
             Self::Npm(message) => write!(f, "не удалось получить зависимости: {message}"),
-            Self::Unsupported(message) => write!(f, "{message}"),
         }
     }
 }
@@ -90,7 +87,7 @@ impl std::error::Error for AppError {
         match self {
             Self::ReadConfig { source, .. } => Some(source),
             Self::ParseConfig { source, .. } => Some(source),
-            Self::Usage(_) | Self::InvalidConfig(_) | Self::Npm(_) | Self::Unsupported(_) => None,
+            Self::Usage(_) | Self::InvalidConfig(_) | Self::Npm(_) => None,
         }
     }
 }

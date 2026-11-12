@@ -1,0 +1,6 @@
+# Тестовый режим: репозиторий tests/fixtures/repos/chain.txt
+package_name: A
+repository: tests/fixtures/repos/chain.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png

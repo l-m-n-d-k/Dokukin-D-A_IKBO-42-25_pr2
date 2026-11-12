@@ -1,0 +1,6 @@
+# Корневого пакета Q нет в тестовом репозитории.
+package_name: Q
+repository: tests/fixtures/repos/chain.txt
+test_mode: true
+version: "1.0.0"
+output_file: graph.png
