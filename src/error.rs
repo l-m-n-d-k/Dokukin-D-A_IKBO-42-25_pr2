@@ -29,6 +29,7 @@ impl FieldError {
 }
 
 impl fmt::Display for FieldError {
+    /// Выводит ошибку в виде `параметр: описание`.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}: {}", self.field, self.message)
     }
@@ -64,7 +65,17 @@ pub enum AppError {
     Render(String),
 }
 
+/// Выводит список ошибок параметров: заголовок и по строке на каждую ошибку.
+fn write_field_errors(f: &mut fmt::Formatter<'_>, errors: &[FieldError]) -> fmt::Result {
+    write!(f, "недопустимые значения параметров:")?;
+    for error in errors {
+        write!(f, "\n  - {error}")?;
+    }
+    Ok(())
+}
+
 impl fmt::Display for AppError {
+    /// Выводит понятное пользователю описание ошибки.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Usage(message) => write!(f, "{message}\n\n{USAGE}"),
@@ -74,13 +85,7 @@ impl fmt::Display for AppError {
             Self::ParseConfig { path, source } => {
                 write!(f, "некорректный конфигурационный файл '{}': {source}", path.display())
             }
-            Self::InvalidConfig(errors) => {
-                write!(f, "недопустимые значения параметров:")?;
-                for error in errors {
-                    write!(f, "\n  - {error}")?;
-                }
-                Ok(())
-            }
+            Self::InvalidConfig(errors) => write_field_errors(f, errors),
             Self::Npm(message) => write!(f, "не удалось получить зависимости: {message}"),
             Self::Reverse(message) => {
                 write!(f, "не удалось найти обратные зависимости: {message}")
@@ -91,6 +96,7 @@ impl fmt::Display for AppError {
 }
 
 impl std::error::Error for AppError {
+    /// Возвращает исходную ошибку, если она есть.
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::ReadConfig { source, .. } => Some(source),

@@ -14,6 +14,7 @@ use depgraph::source::report_for;
 struct FakeRenderer(Result<Vec<u8>, String>);
 
 impl Renderer for FakeRenderer {
+    /// Возвращает заданный результат, не рисуя ничего.
     fn render(&self, _mermaid: &str) -> Result<Vec<u8>, String> {
         self.0.clone()
     }

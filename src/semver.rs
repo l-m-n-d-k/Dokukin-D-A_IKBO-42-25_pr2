@@ -149,22 +149,25 @@ fn less_equal_conds(partial: Partial) -> Vec<Cond> {
     }
 }
 
+/// Операторы в начале компаратора. Длинные стоят раньше коротких:
+/// `>=` нужно проверить раньше, чем `>`.
+const PREFIXES: [&str; 6] = [">=", "<=", ">", "<", "^", "~"];
+
 /// Разбирает один компаратор (`^1.2.3`, `>=1.0`, `1.x`) в список условий.
 fn parse_comparator(text: &str) -> Result<Vec<Cond>, String> {
-    let conds = if let Some(rest) = text.strip_prefix(">=") {
-        vec![Cond::Ge(parse_partial(rest)?.lower())]
-    } else if let Some(rest) = text.strip_prefix("<=") {
-        less_equal_conds(parse_partial(rest)?)
-    } else if let Some(rest) = text.strip_prefix('>') {
-        greater_conds(parse_partial(rest)?)
-    } else if let Some(rest) = text.strip_prefix('<') {
-        vec![Cond::Lt(parse_partial(rest)?.lower())]
-    } else if let Some(rest) = text.strip_prefix('^') {
-        parse_partial(rest)?.caret_conds()
-    } else if let Some(rest) = text.strip_prefix('~') {
-        parse_partial(rest.trim_start_matches('>'))?.tilde_conds()
-    } else {
-        parse_partial(text)?.exact_conds()
+    let (prefix, rest) = PREFIXES
+        .iter()
+        .find_map(|prefix| text.strip_prefix(prefix).map(|rest| (*prefix, rest)))
+        .unwrap_or(("", text));
+    let partial = parse_partial(rest.trim_start_matches('>'))?;
+    let conds = match prefix {
+        ">=" => vec![Cond::Ge(partial.lower())],
+        "<=" => less_equal_conds(partial),
+        ">" => greater_conds(partial),
+        "<" => vec![Cond::Lt(partial.lower())],
+        "^" => partial.caret_conds(),
+        "~" => partial.tilde_conds(),
+        _ => partial.exact_conds(),
     };
     Ok(conds)
 }
