@@ -59,9 +59,9 @@ fn self_dependency_does_not_count() {
     assert!(levels_of("self_cycle.txt", "A", "A").is_empty());
 }
 
+/// Граф от B не содержит A и C, хотя они зависят от D в файле.
 #[test]
 fn only_packages_of_the_graph_are_considered() {
-    // Граф от B не содержит A и C, хотя они зависят от D в файле.
     assert_eq!(levels_of("diamond.txt", "B", "D"), ["B"]);
 }
 

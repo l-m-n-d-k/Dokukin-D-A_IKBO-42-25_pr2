@@ -139,9 +139,9 @@ fn server_error_status_is_reported() {
     assert!(error.contains("500"), "{error}");
 }
 
+/// Порт 1 никто не слушает.
 #[test]
 fn unreachable_server_is_reported() {
-    // Порт 1 никто не слушает.
     let error = fetch_manifest("http://127.0.0.1:1/demo").unwrap_err();
     assert!(error.contains("не удалось подключиться"), "{error}");
 }

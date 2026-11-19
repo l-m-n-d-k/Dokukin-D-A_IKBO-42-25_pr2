@@ -267,7 +267,6 @@ pub fn resolve_version(
     let sets = parse_range(spec)?;
     let matches = |triple: &Triple| sets.iter().any(|set| set.iter().all(|c| c.holds(*triple)));
 
-    // Как и npm, предпочитаем версию с меткой `latest`, если она подходит.
     let latest = dist_tags
         .get(LATEST_TAG)
         .filter(|v| parse_stable(v).is_some_and(|t| matches(&t)));

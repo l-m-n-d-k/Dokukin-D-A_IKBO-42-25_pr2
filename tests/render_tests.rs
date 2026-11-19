@@ -75,9 +75,9 @@ fn error_status_is_reported() {
     assert!(error.contains("414"), "{error}");
 }
 
+/// Порт 1 никто не слушает.
 #[test]
 fn unreachable_service_is_reported() {
-    // Порт 1 никто не слушает.
     let error = MermaidInk::new("http://127.0.0.1:1")
         .render("graph TD\n")
         .unwrap_err();

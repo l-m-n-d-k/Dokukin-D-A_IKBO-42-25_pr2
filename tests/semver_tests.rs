@@ -99,9 +99,9 @@ fn alternatives() {
     assert_eq!(pick("^9.0.0 || ^0.0.3").unwrap(), "0.0.3");
 }
 
+/// "1.10.0" новее "1.3.0", хотя как строка меньше.
 #[test]
 fn newest_version_is_compared_as_number_not_text() {
-    // "1.10.0" новее "1.3.0", хотя как строка меньше.
     assert_eq!(pick("^1.0.0").unwrap(), "1.10.0");
 }
 
@@ -135,9 +135,9 @@ fn unsupported_and_unsatisfiable_ranges_are_errors() {
     }
 }
 
+/// Как в npm: метка latest указывает на 1.3.0, хотя есть 1.10.0.
 #[test]
 fn latest_tag_wins_over_newer_version_if_it_satisfies_the_range() {
-    // Как в npm: метка latest указывает на 1.3.0, хотя есть 1.10.0.
     let tags = BTreeMap::from([("latest".to_string(), "1.3.0".to_string())]);
     assert_eq!(
         resolve_version("^1.0.0", &versions(), &tags).unwrap(),
