@@ -25,11 +25,20 @@ const OUTPUT_EXTENSION: &str = "png";
 /// Возвращает список ошибок по всем параметрам с недопустимыми значениями.
 pub fn validate_config(config: &Config) -> Result<(), Vec<FieldError>> {
     let checks = [
-        ("package_name", check_package_name(&config.package_name, config.test_mode)),
-        ("repository", check_repository(&config.repository, config.test_mode)),
+        (
+            "package_name",
+            check_package_name(&config.package_name, config.test_mode),
+        ),
+        (
+            "repository",
+            check_repository(&config.repository, config.test_mode),
+        ),
         ("version", check_version(&config.version)),
         ("output_file", check_output_file(&config.output_file)),
-        ("reverse_for", check_reverse_for(config.reverse_for.as_deref(), config.test_mode)),
+        (
+            "reverse_for",
+            check_reverse_for(config.reverse_for.as_deref(), config.test_mode),
+        ),
     ];
 
     let errors: Vec<FieldError> = checks
@@ -37,7 +46,11 @@ pub fn validate_config(config: &Config) -> Result<(), Vec<FieldError>> {
         .filter_map(|(field, result)| result.err().map(|msg| FieldError::new(field, msg)))
         .collect();
 
-    if errors.is_empty() { Ok(()) } else { Err(errors) }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
 }
 
 /// Проверяет необязательный параметр `reverse_for`: если он задан, это должно
@@ -80,7 +93,9 @@ pub fn check_npm_package_name(name: &str) -> Result<(), String> {
         return Err(format!("имя пакета длиннее {MAX_NPM_NAME_LEN} символов"));
     }
     if name.chars().any(|c| c.is_uppercase()) {
-        return Err(format!("имя npm-пакета должно быть в нижнем регистре: '{name}'"));
+        return Err(format!(
+            "имя npm-пакета должно быть в нижнем регистре: '{name}'"
+        ));
     }
 
     match name.strip_prefix('@') {
@@ -134,7 +149,10 @@ pub fn check_repository(repository: &str, test_mode: bool) -> Result<(), String>
 
 /// Проверяет, что строка — URL со схемой `http`/`https` и непустым хостом.
 pub fn check_url(url: &str) -> Result<(), String> {
-    let Some(rest) = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://")) else {
+    let Some(rest) = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))
+    else {
         return Err(format!(
             "URL должен начинаться с http:// или https://, получено '{url}' \
              (для файла тестового репозитория укажите test_mode: true)"
@@ -157,7 +175,9 @@ pub fn check_test_repository_file(path: &str) -> Result<(), String> {
         return Err(format!("файл тестового репозитория не найден: '{path}'"));
     }
     if !path_ref.is_file() {
-        return Err(format!("путь к тестовому репозиторию не является файлом: '{path}'"));
+        return Err(format!(
+            "путь к тестовому репозиторию не является файлом: '{path}'"
+        ));
     }
     Ok(())
 }
@@ -211,9 +231,8 @@ fn check_version_core(core: &str) -> Result<(), String> {
 /// Проверяет идентификаторы pre-release/build: непустые части через точку,
 /// состоящие из латинских букв, цифр и дефиса.
 fn check_identifiers(text: &str, kind: &str) -> Result<(), String> {
-    let is_valid = |id: &str| {
-        !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
-    };
+    let is_valid =
+        |id: &str| !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-');
     if text.split('.').all(is_valid) {
         Ok(())
     } else {
@@ -233,15 +252,18 @@ pub fn check_output_file(output: &str) -> Result<(), String> {
         .and_then(|ext| ext.to_str())
         .is_some_and(|ext| ext.eq_ignore_ascii_case(OUTPUT_EXTENSION));
     if !has_png_ext {
-        return Err(format!("файл должен иметь расширение .{OUTPUT_EXTENSION}: '{output}'"));
+        return Err(format!(
+            "файл должен иметь расширение .{OUTPUT_EXTENSION}: '{output}'"
+        ));
     }
     if path.is_dir() {
         return Err(format!("'{output}' является каталогом, а не файлом"));
     }
     match path.parent() {
-        Some(dir) if !dir.as_os_str().is_empty() && !dir.is_dir() => {
-            Err(format!("каталог для выходного файла не существует: '{}'", dir.display()))
-        }
+        Some(dir) if !dir.as_os_str().is_empty() && !dir.is_dir() => Err(format!(
+            "каталог для выходного файла не существует: '{}'",
+            dir.display()
+        )),
         _ => Ok(()),
     }
 }

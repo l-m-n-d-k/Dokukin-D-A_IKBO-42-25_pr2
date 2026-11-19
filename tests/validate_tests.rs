@@ -7,7 +7,13 @@ use depgraph::validate::{
 
 #[test]
 fn npm_names_accepted() {
-    for name in ["express", "lodash.merge", "@types/node", "a-b_c~d", "react-dom"] {
+    for name in [
+        "express",
+        "lodash.merge",
+        "@types/node",
+        "a-b_c~d",
+        "react-dom",
+    ] {
         assert!(check_npm_package_name(name).is_ok(), "{name}");
     }
 }
@@ -15,8 +21,16 @@ fn npm_names_accepted() {
 #[test]
 fn npm_names_rejected() {
     let too_long = "a".repeat(MAX_NPM_NAME_LEN + 1);
-    for name in ["Express", ".hidden", "_private", "has space", "@scope", "@/x", "a/b!", &too_long]
-    {
+    for name in [
+        "Express",
+        ".hidden",
+        "_private",
+        "has space",
+        "@scope",
+        "@/x",
+        "a/b!",
+        &too_long,
+    ] {
         assert!(check_npm_package_name(name).is_err(), "{name}");
     }
 }
@@ -58,7 +72,14 @@ fn repository_depends_on_mode() {
 
 #[test]
 fn versions_accepted() {
-    for v in ["0.0.0", "4.18.2", "10.20.30", "1.0.0-beta.1", "1.0.0+build.5", "1.0.0-rc-1+sha"] {
+    for v in [
+        "0.0.0",
+        "4.18.2",
+        "10.20.30",
+        "1.0.0-beta.1",
+        "1.0.0+build.5",
+        "1.0.0-rc-1+sha",
+    ] {
         assert!(check_version(v).is_ok(), "{v}");
     }
 }
@@ -66,7 +87,16 @@ fn versions_accepted() {
 #[test]
 fn versions_rejected() {
     let bad = [
-        "", "1", "1.2", "1.2.3.4", "01.2.3", "1.x.3", "v1.2.3", "1.2.3-", "1.2.3+", "1.2.3-a..b",
+        "",
+        "1",
+        "1.2",
+        "1.2.3.4",
+        "01.2.3",
+        "1.x.3",
+        "v1.2.3",
+        "1.2.3-",
+        "1.2.3+",
+        "1.2.3-a..b",
     ];
     for v in bad {
         assert!(check_version(v).is_err(), "{v}");

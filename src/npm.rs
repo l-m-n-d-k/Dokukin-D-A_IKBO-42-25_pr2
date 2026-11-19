@@ -70,7 +70,9 @@ fn extract_dependencies(object: &Map<String, Value>) -> Result<Dependencies, Str
     let mut result = Dependencies::new();
     for (name, range) in map {
         let Some(range) = range.as_str() else {
-            return Err(format!("диапазон версий пакета '{name}' должен быть строкой"));
+            return Err(format!(
+                "диапазон версий пакета '{name}' должен быть строкой"
+            ));
         };
         result.insert(name.clone(), range.to_string());
     }
@@ -102,7 +104,9 @@ fn parse_tags(root: &Map<String, Value>) -> Result<BTreeMap<String, String>, Str
     };
     map.iter()
         .map(|(tag, version)| {
-            let version = version.as_str().ok_or(format!("метка '{tag}' должна быть строкой"))?;
+            let version = version
+                .as_str()
+                .ok_or(format!("метка '{tag}' должна быть строкой"))?;
             Ok((tag.clone(), version.to_string()))
         })
         .collect()
@@ -124,7 +128,10 @@ pub fn parse_packument(text: &str) -> Result<Packument, String> {
         return Err(format!("в документе пакета нет поля '{VERSIONS_FIELD}'"));
     };
 
-    let mut packument = Packument { dist_tags: parse_tags(root)?, ..Packument::default() };
+    let mut packument = Packument {
+        dist_tags: parse_tags(root)?,
+        ..Packument::default()
+    };
     for (version, manifest) in versions {
         let Some(manifest) = manifest.as_object() else {
             return Err(format!("описание версии '{version}' должно быть объектом"));
@@ -138,7 +145,10 @@ pub fn parse_packument(text: &str) -> Result<Packument, String> {
 /// Создаёт HTTP-клиент с таймаутом. Один клиент можно использовать для многих
 /// запросов: соединения с сервером переиспользуются.
 fn new_agent() -> ureq::Agent {
-    ureq::Agent::config_builder().timeout_global(Some(REQUEST_TIMEOUT)).build().into()
+    ureq::Agent::config_builder()
+        .timeout_global(Some(REQUEST_TIMEOUT))
+        .build()
+        .into()
 }
 
 /// Скачивает документ по адресу `url` и возвращает его текст.
@@ -184,7 +194,10 @@ pub struct NpmRepository {
 impl NpmRepository {
     /// Создаёт источник данных для репозитория по адресу `repository`.
     pub fn new(repository: &str) -> Self {
-        Self { repository: repository.to_string(), agent: new_agent() }
+        Self {
+            repository: repository.to_string(),
+            agent: new_agent(),
+        }
     }
 }
 
@@ -201,8 +214,13 @@ impl DependencySource for NpmRepository {
             return Err(format!("версия '{version}' не найдена в репозитории"));
         };
 
-        let dependencies: Vec<Requirement> =
-            dependencies.iter().map(|(n, r)| (n.clone(), r.clone())).collect();
-        Ok(Package { version, dependencies })
+        let dependencies: Vec<Requirement> = dependencies
+            .iter()
+            .map(|(n, r)| (n.clone(), r.clone()))
+            .collect();
+        Ok(Package {
+            version,
+            dependencies,
+        })
     }
 }

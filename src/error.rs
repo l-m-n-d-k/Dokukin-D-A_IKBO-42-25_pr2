@@ -80,10 +80,18 @@ impl fmt::Display for AppError {
         match self {
             Self::Usage(message) => write!(f, "{message}\n\n{USAGE}"),
             Self::ReadConfig { path, source } => {
-                write!(f, "не удалось прочитать файл '{}': {source}", path.display())
+                write!(
+                    f,
+                    "не удалось прочитать файл '{}': {source}",
+                    path.display()
+                )
             }
             Self::ParseConfig { path, source } => {
-                write!(f, "некорректный конфигурационный файл '{}': {source}", path.display())
+                write!(
+                    f,
+                    "некорректный конфигурационный файл '{}': {source}",
+                    path.display()
+                )
             }
             Self::InvalidConfig(errors) => write_field_errors(f, errors),
             Self::Npm(message) => write!(f, "не удалось получить зависимости: {message}"),

@@ -26,7 +26,10 @@ fn reverse_edges(graph: &Graph) -> BTreeMap<&str, Vec<&str>> {
     let mut edges: BTreeMap<&str, Vec<&str>> = BTreeMap::new();
     for node in &graph.nodes {
         for dependency in &node.dependencies {
-            edges.entry(dependency.as_str()).or_default().push(node.name.as_str());
+            edges
+                .entry(dependency.as_str())
+                .or_default()
+                .push(node.name.as_str());
         }
     }
     edges
@@ -70,15 +73,27 @@ pub fn reverse_dependencies(graph: &Graph, target: &str) -> Result<Levels, Strin
 /// Форматирует обратные зависимости для вывода на экран: заголовок и
 /// по строке на каждый уровень.
 pub fn format_reverse(graph: &Graph, target: &str, levels: &Levels) -> String {
-    let root = graph.nodes.first().map(|node| node.label()).unwrap_or_default();
+    let root = graph
+        .nodes
+        .first()
+        .map(|node| node.label())
+        .unwrap_or_default();
     let total: usize = levels.iter().map(Vec::len).sum();
     let mut text = format!("Обратные зависимости {target} в графе {root}: {total}\n");
     if levels.is_empty() {
         text.push_str("  (ни один пакет графа не зависит от этого пакета)\n");
     }
     for (index, level) in levels.iter().enumerate() {
-        let kind = if index == DIRECT_LEVEL { "напрямую" } else { "через другие пакеты" };
-        text.push_str(&format!("  уровень {} ({kind}): {}\n", index + 1, level.join(", ")));
+        let kind = if index == DIRECT_LEVEL {
+            "напрямую"
+        } else {
+            "через другие пакеты"
+        };
+        text.push_str(&format!(
+            "  уровень {} ({kind}): {}\n",
+            index + 1,
+            level.join(", ")
+        ));
     }
     text
 }

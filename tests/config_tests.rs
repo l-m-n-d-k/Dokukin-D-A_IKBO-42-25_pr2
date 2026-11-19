@@ -46,7 +46,10 @@ fn config_is_printed_as_key_value() {
 
 #[test]
 fn missing_file_is_read_error() {
-    assert!(matches!(load_fixture("no_such.yaml"), Err(AppError::ReadConfig { .. })));
+    assert!(matches!(
+        load_fixture("no_such.yaml"),
+        Err(AppError::ReadConfig { .. })
+    ));
 }
 
 #[test]
@@ -59,7 +62,10 @@ fn structural_problems_are_parse_errors() {
         "empty.yaml",
     ] {
         let result = load_fixture(name);
-        assert!(matches!(result, Err(AppError::ParseConfig { .. })), "{name}: {result:?}");
+        assert!(
+            matches!(result, Err(AppError::ParseConfig { .. })),
+            "{name}: {result:?}"
+        );
     }
 }
 
@@ -70,7 +76,11 @@ fn all_bad_values_are_reported_at_once() {
             panic!("{name}: ожидалась ошибка InvalidConfig");
         };
         let fields: Vec<_> = errors.iter().map(|e| e.field).collect();
-        assert_eq!(fields, ["package_name", "repository", "version", "output_file"], "{name}");
+        assert_eq!(
+            fields,
+            ["package_name", "repository", "version", "output_file"],
+            "{name}"
+        );
     }
 }
 
@@ -82,15 +92,24 @@ fn args_without_path_use_default_config() {
 
 #[test]
 fn args_with_path_and_help() {
-    assert_eq!(parse_args(args(&["my.yaml"])).unwrap(), Command::Run("my.yaml".into()));
+    assert_eq!(
+        parse_args(args(&["my.yaml"])).unwrap(),
+        Command::Run("my.yaml".into())
+    );
     assert_eq!(parse_args(args(&["--help"])).unwrap(), Command::Help);
     assert_eq!(parse_args(args(&["-h"])).unwrap(), Command::Help);
 }
 
 #[test]
 fn bad_args_are_usage_errors() {
-    assert!(matches!(parse_args(args(&["a.yaml", "b.yaml"])), Err(AppError::Usage(_))));
-    assert!(matches!(parse_args(args(&["--verbose"])), Err(AppError::Usage(_))));
+    assert!(matches!(
+        parse_args(args(&["a.yaml", "b.yaml"])),
+        Err(AppError::Usage(_))
+    ));
+    assert!(matches!(
+        parse_args(args(&["--verbose"])),
+        Err(AppError::Usage(_))
+    ));
 }
 
 #[test]

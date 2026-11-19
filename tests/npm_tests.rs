@@ -29,8 +29,16 @@ fn dependencies_are_extracted_from_manifest() {
 
 #[test]
 fn missing_dependencies_field_means_no_dependencies() {
-    assert!(parse_dependencies(r#"{"name": "leaf"}"#).unwrap().is_empty());
-    assert!(parse_dependencies(r#"{"dependencies": {}}"#).unwrap().is_empty());
+    assert!(
+        parse_dependencies(r#"{"name": "leaf"}"#)
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        parse_dependencies(r#"{"dependencies": {}}"#)
+            .unwrap()
+            .is_empty()
+    );
 }
 
 #[test]

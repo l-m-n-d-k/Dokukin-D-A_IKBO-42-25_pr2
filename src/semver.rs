@@ -57,7 +57,11 @@ struct Partial {
 impl Partial {
     /// Нижняя граница: неуказанные номера считаются нулями.
     fn lower(self) -> Triple {
-        (self.major.unwrap_or(ZERO), self.minor.unwrap_or(ZERO), self.patch.unwrap_or(ZERO))
+        (
+            self.major.unwrap_or(ZERO),
+            self.minor.unwrap_or(ZERO),
+            self.patch.unwrap_or(ZERO),
+        )
     }
 
     /// Первая версия, которая уже не подходит под частичную версию:
@@ -114,7 +118,9 @@ fn parse_number(text: &str) -> Result<Option<u64>, String> {
     if matches!(text, "x" | "X" | "*") {
         return Ok(None);
     }
-    text.parse::<u64>().map(Some).map_err(|_| format!("'{text}' не является номером версии"))
+    text.parse::<u64>()
+        .map(Some)
+        .map_err(|_| format!("'{text}' не является номером версии"))
 }
 
 /// Разбирает частичную версию вида `1`, `1.2`, `1.2.3`, `1.x`.
@@ -130,7 +136,11 @@ fn parse_partial(text: &str) -> Result<Partial, String> {
     if parts.next().is_some() {
         return Err(format!("слишком много частей в версии '{text}'"));
     }
-    Ok(Partial { major, minor, patch })
+    Ok(Partial {
+        major,
+        minor,
+        patch,
+    })
 }
 
 /// Условия для `>`: `>1.2` означает `>=1.3.0`, `>1.2.3` — строго больше.
@@ -258,7 +268,9 @@ pub fn resolve_version(
     let matches = |triple: &Triple| sets.iter().any(|set| set.iter().all(|c| c.holds(*triple)));
 
     // Как и npm, предпочитаем версию с меткой `latest`, если она подходит.
-    let latest = dist_tags.get(LATEST_TAG).filter(|v| parse_stable(v).is_some_and(|t| matches(&t)));
+    let latest = dist_tags
+        .get(LATEST_TAG)
+        .filter(|v| parse_stable(v).is_some_and(|t| matches(&t)));
     if let Some(latest) = latest {
         return Ok(latest.clone());
     }

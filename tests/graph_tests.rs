@@ -25,7 +25,13 @@ fn order(graph: &Graph) -> Vec<&str> {
 
 /// Зависимости вершины.
 fn deps<'a>(graph: &'a Graph, name: &str) -> Vec<&'a str> {
-    graph.node(name).unwrap().dependencies.iter().map(String::as_str).collect()
+    graph
+        .node(name)
+        .unwrap()
+        .dependencies
+        .iter()
+        .map(String::as_str)
+        .collect()
 }
 
 #[test]

@@ -62,7 +62,10 @@ fn mermaid_text_is_printed_even_if_rendering_fails() {
     let (text, result) = run(&config, &FakeRenderer(Err("сервис занят".to_string())));
 
     assert!(text.starts_with("graph TD\n"), "{text}");
-    assert!(matches!(&result, Err(AppError::Render(m)) if m.contains("занят")), "{result:?}");
+    assert!(
+        matches!(&result, Err(AppError::Render(m)) if m.contains("занят")),
+        "{result:?}"
+    );
     assert!(!output.exists());
 }
 
@@ -73,7 +76,10 @@ fn unwritable_output_file_is_reported() {
 
     let (_, result) = run(&config, &FakeRenderer(Ok(fake_png())));
 
-    assert!(matches!(&result, Err(AppError::Render(m)) if m.contains("записать")), "{result:?}");
+    assert!(
+        matches!(&result, Err(AppError::Render(m)) if m.contains("записать")),
+        "{result:?}"
+    );
 }
 
 #[test]
@@ -81,10 +87,16 @@ fn reverse_mode_prints_dependants_and_draws_nothing() {
     let output = temp_path("reverse.png");
     let config = config_for("diamond.txt", output.to_str().unwrap(), Some("D"));
 
-    let (text, result) = run(&config, &FakeRenderer(Err("не должен вызываться".to_string())));
+    let (text, result) = run(
+        &config,
+        &FakeRenderer(Err("не должен вызываться".to_string())),
+    );
 
     result.unwrap();
-    assert!(text.starts_with("Обратные зависимости D в графе A: 3\n"), "{text}");
+    assert!(
+        text.starts_with("Обратные зависимости D в графе A: 3\n"),
+        "{text}"
+    );
     assert!(!output.exists());
 }
 

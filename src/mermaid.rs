@@ -39,17 +39,29 @@ fn node_id(index: usize) -> String {
 /// вершины — по алфавиту. Циклические зависимости превращаются в обычные
 /// рёбра, которые возвращаются к уже нарисованным вершинам.
 pub fn to_mermaid(graph: &Graph) -> String {
-    let ids: HashMap<&str, usize> =
-        graph.nodes.iter().enumerate().map(|(index, node)| (node.name.as_str(), index)).collect();
+    let ids: HashMap<&str, usize> = graph
+        .nodes
+        .iter()
+        .enumerate()
+        .map(|(index, node)| (node.name.as_str(), index))
+        .collect();
 
     let mut lines = vec![HEADER.to_string()];
     for (index, node) in graph.nodes.iter().enumerate() {
-        lines.push(format!("{INDENT}{}[\"{}\"]", node_id(index), escape_label(&node.label())));
+        lines.push(format!(
+            "{INDENT}{}[\"{}\"]",
+            node_id(index),
+            escape_label(&node.label())
+        ));
     }
     for (index, node) in graph.nodes.iter().enumerate() {
         for dependency in &node.dependencies {
             if let Some(&target) = ids.get(dependency.as_str()) {
-                lines.push(format!("{INDENT}{} --> {}", node_id(index), node_id(target)));
+                lines.push(format!(
+                    "{INDENT}{} --> {}",
+                    node_id(index),
+                    node_id(target)
+                ));
             }
         }
     }

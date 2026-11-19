@@ -98,7 +98,9 @@ pub fn build_graph(
     let mut queue = VecDeque::from([(root.to_string(), root_spec.to_string())]);
 
     while let Some((name, spec)) = queue.pop_front() {
-        let package = source.package(&name, &spec).map_err(|e| format!("пакет '{name}': {e}"))?;
+        let package = source
+            .package(&name, &spec)
+            .map_err(|e| format!("пакет '{name}': {e}"))?;
         let mut dependencies = BTreeSet::new();
         for (dependency, range) in package.dependencies {
             dependencies.insert(dependency.clone());

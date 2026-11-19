@@ -54,7 +54,9 @@ pub fn parse_test_repository(text: &str) -> Result<TestRepository, String> {
         if line.is_empty() {
             continue;
         }
-        repository.add_line(line).map_err(|e| format!("строка {}: {e}", index + 1))?;
+        repository
+            .add_line(line)
+            .map_err(|e| format!("строка {}: {e}", index + 1))?;
     }
     Ok(repository)
 }
@@ -101,7 +103,10 @@ impl DependencySource for TestRepository {
         let dependencies = self.dependencies.get(name).cloned().unwrap_or_default();
         Ok(Package {
             version: String::new(),
-            dependencies: dependencies.into_iter().map(|d| (d, String::new())).collect(),
+            dependencies: dependencies
+                .into_iter()
+                .map(|d| (d, String::new()))
+                .collect(),
         })
     }
 }

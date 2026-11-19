@@ -56,7 +56,9 @@ pub struct MermaidInk {
 impl MermaidInk {
     /// Создаёт рендерер для сервиса по адресу `base_url`.
     pub fn new(base_url: &str) -> Self {
-        Self { base_url: base_url.trim_end_matches('/').to_string() }
+        Self {
+            base_url: base_url.trim_end_matches('/').to_string(),
+        }
     }
 }
 
@@ -75,8 +77,12 @@ impl Default for MermaidInk {
 pub fn encode_diagram(mermaid: &str) -> Result<String, String> {
     let payload = json!({ "code": mermaid, "mermaid": { "theme": "default" } }).to_string();
     let mut encoder = ZlibEncoder::new(Vec::new(), Compression::best());
-    encoder.write_all(payload.as_bytes()).map_err(|e| format!("не удалось сжать схему: {e}"))?;
-    let compressed = encoder.finish().map_err(|e| format!("не удалось сжать схему: {e}"))?;
+    encoder
+        .write_all(payload.as_bytes())
+        .map_err(|e| format!("не удалось сжать схему: {e}"))?;
+    let compressed = encoder
+        .finish()
+        .map_err(|e| format!("не удалось сжать схему: {e}"))?;
     Ok(URL_SAFE_NO_PAD.encode(compressed))
 }
 
@@ -88,7 +94,10 @@ impl MermaidInk {
     /// Возвращает ошибку сжатия схемы, см. [`encode_diagram`].
     pub fn image_url(&self, mermaid: &str) -> Result<String, String> {
         let code = encode_diagram(mermaid)?;
-        Ok(format!("{}/img/pako:{code}?type=png&bgColor=white", self.base_url))
+        Ok(format!(
+            "{}/img/pako:{code}?type=png&bgColor=white",
+            self.base_url
+        ))
     }
 }
 
@@ -105,10 +114,14 @@ fn describe_error(error: &ureq::Error) -> String {
 impl Renderer for MermaidInk {
     /// Скачивает PNG со схемой с сервиса и проверяет, что это действительно PNG.
     fn render(&self, mermaid: &str) -> Result<Vec<u8>, String> {
-        let agent: ureq::Agent =
-            ureq::Agent::config_builder().timeout_global(Some(REQUEST_TIMEOUT)).build().into();
-        let mut response =
-            agent.get(&self.image_url(mermaid)?).call().map_err(|e| describe_error(&e))?;
+        let agent: ureq::Agent = ureq::Agent::config_builder()
+            .timeout_global(Some(REQUEST_TIMEOUT))
+            .build()
+            .into();
+        let mut response = agent
+            .get(&self.image_url(mermaid)?)
+            .call()
+            .map_err(|e| describe_error(&e))?;
         let body = response
             .body_mut()
             .read_to_vec()
@@ -117,8 +130,10 @@ impl Renderer for MermaidInk {
         if body.starts_with(PNG_SIGNATURE) {
             return Ok(body);
         }
-        let preview: String =
-            String::from_utf8_lossy(&body).chars().take(MAX_ERROR_PREVIEW).collect();
+        let preview: String = String::from_utf8_lossy(&body)
+            .chars()
+            .take(MAX_ERROR_PREVIEW)
+            .collect();
         Err(format!("сервис отрисовки вернул не PNG: {preview}"))
     }
 }

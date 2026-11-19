@@ -23,7 +23,11 @@ fn answer(mut stream: TcpStream, routes: &HashMap<&str, Reply>) -> String {
     let mut buffer = [0u8; REQUEST_BUFFER];
     let read = stream.read(&mut buffer).unwrap();
     let request = String::from_utf8_lossy(&buffer[..read]).into_owned();
-    let path = request.split_whitespace().nth(1).unwrap_or_default().to_string();
+    let path = request
+        .split_whitespace()
+        .nth(1)
+        .unwrap_or_default()
+        .to_string();
 
     let not_found = ("404 Not Found", "{}");
     let (status, body) = routes.get(path.as_str()).copied().unwrap_or(not_found);
@@ -42,7 +46,9 @@ fn serve(routes: &[(&'static str, Reply)], count: usize) -> (String, Server) {
     let routes: HashMap<&str, Reply> = routes.iter().copied().collect();
     let handle = thread::spawn(move || {
         let connections = listener.incoming().take(count);
-        connections.map(|stream| answer(stream.unwrap(), &routes)).collect()
+        connections
+            .map(|stream| answer(stream.unwrap(), &routes))
+            .collect()
     });
     (address, handle)
 }
@@ -71,13 +77,21 @@ const UTIL: &str = r#"{"versions": {"2.0.0": {}, "2.0.7": {}, "2.1.0": {}}}"#;
 #[test]
 fn graph_is_built_from_repository_url() {
     let ok = "200 OK";
-    let routes = [("/app", (ok, APP)), ("/lib", (ok, LIB)), ("/util", (ok, UTIL))];
+    let routes = [
+        ("/app", (ok, APP)),
+        ("/lib", (ok, LIB)),
+        ("/util", (ok, UTIL)),
+    ];
     let (address, server) = serve(&routes, 3);
 
     let mut repository = NpmRepository::new(&address);
     let graph = build_graph(&mut repository, "app", "1.1.0").unwrap();
 
-    let found: Vec<_> = graph.nodes.iter().map(|n| format!("{}@{}", n.name, n.version)).collect();
+    let found: Vec<_> = graph
+        .nodes
+        .iter()
+        .map(|n| format!("{}@{}", n.name, n.version))
+        .collect();
     assert_eq!(found, ["app@1.1.0", "lib@1.4.0", "util@2.0.7"]);
     assert_eq!(graph.node("lib").unwrap().dependencies, ["app"]);
     assert_eq!(server.join().unwrap(), ["/app", "/lib", "/util"]);
@@ -105,7 +119,10 @@ fn missing_package_is_reported_with_its_name() {
     let (address, _server) = serve(&[("/app", ("200 OK", APP))], 2);
     let mut repository = NpmRepository::new(&address);
     let error = build_graph(&mut repository, "app", "1.0.0").unwrap_err();
-    assert!(error.contains("'lib'") && error.contains("не найден"), "{error}");
+    assert!(
+        error.contains("'lib'") && error.contains("не найден"),
+        "{error}"
+    );
 }
 
 #[test]
@@ -132,6 +149,8 @@ fn unreachable_server_is_reported() {
 #[test]
 fn invalid_json_from_server_is_an_error() {
     let (address, _server) = serve(&[("/app", ("200 OK", "<html>not json</html>"))], 1);
-    let error = NpmRepository::new(&address).package("app", "1.0.0").unwrap_err();
+    let error = NpmRepository::new(&address)
+        .package("app", "1.0.0")
+        .unwrap_err();
     assert!(error.contains("JSON"), "{error}");
 }

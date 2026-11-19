@@ -42,7 +42,11 @@ fn self_dependency_becomes_a_loop() {
 #[test]
 fn package_without_dependencies_has_no_edges() {
     let graph = Graph {
-        nodes: vec![Node { name: "lone".into(), version: "1.0.0".into(), dependencies: vec![] }],
+        nodes: vec![Node {
+            name: "lone".into(),
+            version: "1.0.0".into(),
+            dependencies: vec![],
+        }],
     };
     assert_eq!(to_mermaid(&graph), "graph TD\n    n0[\"lone@1.0.0\"]\n");
 }
@@ -56,7 +60,11 @@ fn labels_keep_scope_and_version_and_ids_stay_simple() {
                 version: "7.0.0".into(),
                 dependencies: vec!["lodash.merge".into()],
             },
-            Node { name: "lodash.merge".into(), version: "4.6.2".into(), dependencies: vec![] },
+            Node {
+                name: "lodash.merge".into(),
+                version: "4.6.2".into(),
+                dependencies: vec![],
+            },
         ],
     };
     let text = to_mermaid(&graph);
@@ -68,7 +76,11 @@ fn labels_keep_scope_and_version_and_ids_stay_simple() {
 #[test]
 fn quotes_in_labels_are_escaped() {
     let graph = Graph {
-        nodes: vec![Node { name: "a\"b".into(), version: String::new(), dependencies: vec![] }],
+        nodes: vec![Node {
+            name: "a\"b".into(),
+            version: String::new(),
+            dependencies: vec![],
+        }],
     };
     assert!(to_mermaid(&graph).contains("n0[\"a#quot;b\"]"));
 }

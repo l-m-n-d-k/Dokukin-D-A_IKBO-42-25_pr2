@@ -7,8 +7,20 @@ use depgraph::semver::resolve_version;
 /// Набор доступных версий для тестов.
 fn versions() -> Vec<String> {
     [
-        "0.0.3", "0.1.0", "0.1.5", "0.2.0", "1.0.0", "1.2.3", "1.2.9", "1.3.0", "1.10.0",
-        "2.0.0", "2.1.2", "2.5.0", "3.0.0", "3.0.1-beta.1",
+        "0.0.3",
+        "0.1.0",
+        "0.1.5",
+        "0.2.0",
+        "1.0.0",
+        "1.2.3",
+        "1.2.9",
+        "1.3.0",
+        "1.10.0",
+        "2.0.0",
+        "2.1.2",
+        "2.5.0",
+        "3.0.0",
+        "3.0.1-beta.1",
     ]
     .iter()
     .map(|v| v.to_string())
@@ -103,13 +115,22 @@ fn prerelease_is_chosen_only_explicitly() {
 #[test]
 fn tags_are_resolved_first() {
     let tags = BTreeMap::from([("latest".to_string(), "2.0.0".to_string())]);
-    assert_eq!(resolve_version("latest", &versions(), &tags).unwrap(), "2.0.0");
+    assert_eq!(
+        resolve_version("latest", &versions(), &tags).unwrap(),
+        "2.0.0"
+    );
     assert!(resolve_version("latest", &versions(), &BTreeMap::new()).is_err());
 }
 
 #[test]
 fn unsupported_and_unsatisfiable_ranges_are_errors() {
-    for spec in ["^9.0.0", "git+https://example.com/a.git", "npm:other@1", "file:../a", "a.b.c"] {
+    for spec in [
+        "^9.0.0",
+        "git+https://example.com/a.git",
+        "npm:other@1",
+        "file:../a",
+        "a.b.c",
+    ] {
         assert!(pick(spec).is_err(), "{spec}");
     }
 }
@@ -118,13 +139,22 @@ fn unsupported_and_unsatisfiable_ranges_are_errors() {
 fn latest_tag_wins_over_newer_version_if_it_satisfies_the_range() {
     // Как в npm: метка latest указывает на 1.3.0, хотя есть 1.10.0.
     let tags = BTreeMap::from([("latest".to_string(), "1.3.0".to_string())]);
-    assert_eq!(resolve_version("^1.0.0", &versions(), &tags).unwrap(), "1.3.0");
+    assert_eq!(
+        resolve_version("^1.0.0", &versions(), &tags).unwrap(),
+        "1.3.0"
+    );
     assert_eq!(resolve_version("*", &versions(), &tags).unwrap(), "1.3.0");
 }
 
 #[test]
 fn latest_tag_is_ignored_if_it_does_not_satisfy_the_range() {
     let tags = BTreeMap::from([("latest".to_string(), "1.3.0".to_string())]);
-    assert_eq!(resolve_version("^2.0.0", &versions(), &tags).unwrap(), "2.5.0");
-    assert_eq!(resolve_version("^0.1.0", &versions(), &tags).unwrap(), "0.1.5");
+    assert_eq!(
+        resolve_version("^2.0.0", &versions(), &tags).unwrap(),
+        "2.5.0"
+    );
+    assert_eq!(
+        resolve_version("^0.1.0", &versions(), &tags).unwrap(),
+        "0.1.5"
+    );
 }

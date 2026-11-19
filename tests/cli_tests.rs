@@ -87,8 +87,16 @@ fn test_mode_handles_cycles() {
 fn render_failure_keeps_mermaid_text_and_fails() {
     let (output, png) = run_with_renderer("test_diamond", "503 Service Unavailable", Vec::new());
     assert!(!output.status.success());
-    assert!(stdout(&output).starts_with("graph TD"), "{}", stdout(&output));
-    assert!(stderr(&output).contains("не удалось создать изображение"), "{}", stderr(&output));
+    assert!(
+        stdout(&output).starts_with("graph TD"),
+        "{}",
+        stdout(&output)
+    );
+    assert!(
+        stderr(&output).contains("не удалось создать изображение"),
+        "{}",
+        stderr(&output)
+    );
     assert!(!png.exists());
 }
 
@@ -111,7 +119,10 @@ fn reverse_mode_prints_dependants_by_levels() {
     let output = run_app(&["tests/fixtures/reverse_demo_g.yaml"]);
     assert!(output.status.success());
     let text = stdout(&output);
-    assert!(text.starts_with("Обратные зависимости G в графе A: 5\n"), "{text}");
+    assert!(
+        text.starts_with("Обратные зависимости G в графе A: 5\n"),
+        "{text}"
+    );
     assert!(text.contains("уровень 1 (напрямую): D, E"), "{text}");
 }
 
@@ -133,14 +144,22 @@ fn reverse_mode_reports_package_outside_the_graph() {
 fn reverse_mode_validates_the_package_name() {
     let output = run_app(&["tests/fixtures/reverse_bad_name.yaml"]);
     assert!(!output.status.success());
-    assert!(stderr(&output).contains("reverse_for"), "{}", stderr(&output));
+    assert!(
+        stderr(&output).contains("reverse_for"),
+        "{}",
+        stderr(&output)
+    );
 }
 
 #[test]
 fn unreachable_repository_prints_error_and_fails() {
     let output = run_app(&["tests/fixtures/unreachable.yaml"]);
     assert!(!output.status.success());
-    assert!(stderr(&output).contains("не удалось подключиться"), "{}", stderr(&output));
+    assert!(
+        stderr(&output).contains("не удалось подключиться"),
+        "{}",
+        stderr(&output)
+    );
 }
 
 #[test]
